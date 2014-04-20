@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings, GeneralizedNewtypeDeriving #-}
 
 module System.Hardware.BusPirate.I2C
-  ( -- * Primitive operations
+  ( -- * Bus operations
     I2cM
   , i2cMode
   , startBit
@@ -9,7 +9,6 @@ module System.Hardware.BusPirate.I2C
   , readByte
   , ackBit
   , nackBit
-  , AckNack(..)
   , bulkWrite
   , writeRead
     -- * Configuration
@@ -61,9 +60,6 @@ stopBit = I2cM $ command 0x3
 readByte :: I2cM Word8
 readByte = I2cM $ putByte 0x4 >> getByte
 
-data AckNack = Ack | Nack
-             deriving (Show, Eq, Ord, Enum, Bounded)
-
 -- | Send an ACK 
 ackBit :: I2cM ()
 ackBit = I2cM $ command 0x6
@@ -71,6 +67,9 @@ ackBit = I2cM $ command 0x6
 -- | Send a NACK 
 nackBit :: I2cM ()
 nackBit = I2cM $ command 0x7
+
+data AckNack = Ack | Nack
+             deriving (Show, Eq, Ord, Enum, Bounded)
 
 -- | Write some bytes
 bulkWrite :: ByteString -> I2cM ()
