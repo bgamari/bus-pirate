@@ -1,7 +1,9 @@
 -- | Example demonstrating usage with ADXL345 accelerometer
 
 import System.Hardware.BusPirate
+import Data.Binary.Get
 import qualified Data.ByteString as BS
+import qualified Data.ByteString.Lazy as LBS
 import Data.Word
 import Control.Monad (forever)
 import Control.Monad.IO.Class
@@ -34,12 +36,11 @@ writeReg addr reg value = do
 
 readAccel :: I2CAddress -> I2cM (Int, Int, Int)
 readAccel addr = do
-    (,,) <$> readPair 0x32 <*> readPair 0x34 <*> readPair 0x36
+    d <- readReg' addr 0x32 (3*2)
+    return $ flip runGet (LBS.fromStrict d) $ do
+      (,,) <$> get <*> get <*> get
   where
-    readPair base = do
-      lsb <- readReg addr base
-      msb <- readReg addr (base+1)
-      return $ (fromIntegral msb) * 2^8 + fromIntegral lsb
+    get = fromIntegral <$> getWord16be
 
 main = do
     runBusPirate "/dev/ttyUSB0" $ i2cMode $ do
