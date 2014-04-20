@@ -1,6 +1,12 @@
 {-# LANGUAGE OverloadedStrings, GeneralizedNewtypeDeriving #-}
                 
-module System.Hardware.BusPirate where
+module System.Hardware.BusPirate
+  ( -- * General
+    module System.Hardware.BusPirate.Core
+    -- * I2C mode
+  , i2cMode
+  , module System.Hardware.BusPirate.I2C
+  ) where
 
 import Control.Monad (replicateM)
 import Control.Monad.IO.Class
