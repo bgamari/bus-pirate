@@ -54,7 +54,7 @@ commandExpect :: Word8 -> ByteString -> BusPirateM ()
 commandExpect cmd reply = do
     put $ BS.pack [fromIntegral cmd]
     r <- get (BS.length reply)
-    if r == reply
+    if r /= reply
       then fail $ "Expected reply '"++show reply++"', found '"++show r++"'"
       else return ()
     
