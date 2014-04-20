@@ -50,14 +50,15 @@ attempt n action = go n
                 Left _  -> go (n-1)
 
 runBusPirate :: FilePath -> BusPirateM a -> IO (Either String a)
-runBusPirate path (BPM action) = runEitherT $ do
+runBusPirate path (BPM action) = do
     dev <- liftIO $ SP.hOpenSerial path settings
-    attempt 20 (initialize dev)
-    liftIO $ drainInput dev
-    res <- EitherT $ runReaderT (runEitherT action) dev
-    liftIO $ replicateM_ 20 $ BS.hPut dev "\x00"
-    liftIO $ BS.hPut dev "\x0f"
-    liftIO $ hClose dev
+    res <- runEitherT $ do
+      attempt 20 (initialize dev)
+      liftIO $ drainInput dev
+      EitherT $ runReaderT (runEitherT action) dev
+    replicateM_ 20 $ BS.hPut dev "\x00"
+    BS.hPut dev "\x0f"
+    hClose dev
     return res
 
 put :: ByteString -> BusPirateM ()
