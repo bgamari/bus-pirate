@@ -16,10 +16,3 @@ import Control.Applicative
 
 import System.Hardware.BusPirate.Core
 import System.Hardware.BusPirate.I2C
-
---spiMode :: SpiM a BusPirateM a
---spiMode = commandExpect 0x01 "SPI1"
-
---uartMode :: UartM a -> BusPirateM a
---uartMode = commandExpect 0x3 "ART1"         
-         
