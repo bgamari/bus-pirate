@@ -3,12 +3,14 @@
 module System.Hardware.BusPirate.Core where
 
 import Control.Applicative
+import Control.Monad (when)
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.Either
 import Control.Monad.Trans.Reader
 import Control.Monad.IO.Class
 import System.IO
 import Data.Word
+import Control.Concurrent (threadDelay)
 
 import System.Hardware.Serialport as SP
 
@@ -23,6 +25,12 @@ withDevice action = BPM (lift ask) >>= action
 
 settings = defaultSerialSettings { commSpeed = CS115200 }
 
+drainInput :: Handle -> IO ()
+drainInput h = do
+    threadDelay 10
+    a <- BS.hGetSome h 100
+    when (not $ BS.null a) $ drainInput h
+
 runBusPirate :: FilePath -> BusPirateM a -> IO (Either String a)
 runBusPirate path (BPM action) = runEitherT $ do
     dev <- liftIO $ SP.hOpenSerial path settings
@@ -35,7 +43,7 @@ runBusPirate path (BPM action) = runEitherT $ do
             then return $ Right ()
             else go (n-1)
     go 20
-    liftIO $ hFlush dev
+    liftIO $ drainInput dev
     EitherT $ runReaderT (runEitherT action) dev
 
 put :: ByteString -> BusPirateM ()
