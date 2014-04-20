@@ -3,8 +3,8 @@
 module System.Hardware.BusPirate where
 
 import System.Hardware.Serialport as SP
-import qualified Data.ByteString.Char8 as BS
-import Data.ByteString.Char8 (ByteString)
+import qualified Data.ByteString as BS
+import Data.ByteString (ByteString)
 import Control.Error
 import Control.Monad (replicateM)
 import Control.Monad.IO.Class
@@ -45,15 +45,17 @@ get n = withDevice $ \dev->BPM $ liftIO $ BS.hGet dev n
 
 getByte :: BusPirateM Word8
 getByte = do
-    get 1
-    return 1
+    r <- get 1
+    if BS.null r
+      then fail $ "Failed to read byte"
+      else return $ BS.head r
 
 commandExpect :: Word8 -> ByteString -> BusPirateM ()
 commandExpect cmd reply = do
-    put $ BS.pack [chr $ fromIntegral cmd]
+    put $ BS.pack [fromIntegral cmd]
     r <- get (BS.length reply)
     if r == reply
-      then fail $ "Expected reply '"++BS.unpack reply++"', found '"++BS.unpack r++"'"
+      then fail $ "Expected reply '"++show reply++"', found '"++show r++"'"
       else return ()
     
 command :: Word8 -> BusPirateM ()
@@ -79,6 +81,9 @@ stopBit = I2cM $ command 0x3
 
 readByte :: I2cM Word8
 readByte = I2cM $ put "\x04" >> getByte
+
+data AckNack = Ack | Nack
+             deriving (Show, Eq, Ord, Enum, Bounded)
          
 ackBit :: I2cM ()
 ackBit = I2cM $ command 0x6
@@ -86,16 +91,14 @@ ackBit = I2cM $ command 0x6
 nackBit :: I2cM ()
 nackBit = I2cM $ command 0x7
 
-{-        
-bulkWrite :: ByteString -> I2cM ()
+bulkWrite :: ByteString -> I2cM [AckNack]
 bulkWrite d 
-  | BS.null d = return ()
+  | BS.null d = return []
   | BS.length d > 16 = I2cM $ BPM $ left "Too many bytes"
   | otherwise = I2cM $ do 
     command $ fromIntegral $ 0x10 + BS.length d - 1
     put d
-    replicateM (BS.length d) $ get 1
--}
+    replicateM (BS.length d) $ toEnum . fromIntegral <$> getByte
 
 data I2cConfig = I2cConfig { i2cPower      :: Bool
                            , i2cPullups    :: Bool
@@ -119,7 +122,7 @@ data I2cSpeed = I2c_5kHz
               | I2c_50kHz
               | I2c_100kHz
               | I2c_400kHz
-              deriving (Show, Eq, Ord, Enum)
+              deriving (Show, Eq, Ord, Enum, Bounded)
               
 setSpeed :: I2cSpeed -> I2cM ()
 setSpeed speed = I2cM $ command $ fromIntegral $ 0x60 + fromEnum speed
