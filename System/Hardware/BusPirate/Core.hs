@@ -3,7 +3,7 @@
 module System.Hardware.BusPirate.Core where
 
 import Control.Applicative
-import Control.Monad (when)
+import Control.Monad (when, replicateM_)
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.Either
 import Control.Monad.Trans.Reader
@@ -31,20 +31,34 @@ drainInput h = do
     a <- BS.hGetSome h 100
     when (not $ BS.null a) $ drainInput h
 
+initialize :: Handle -> EitherT String IO ()
+initialize dev = do
+    liftIO $ hFlush dev
+    liftIO $ BS.hPut dev "\x00"
+    a <- liftIO $ BS.hGetSome dev 5
+    when (a /= "BBIO1")
+      $ left "Invalid response during initialization"
+
+-- | Run the given action until success up to n times
+attempt :: Monad m => Int -> EitherT e m a -> EitherT e m a
+attempt n action = go n
+  where
+    go 0 = action
+    go n = do res <- lift $ runEitherT action
+              case res of
+                Right a -> return a
+                Left _  -> go (n-1)
+
 runBusPirate :: FilePath -> BusPirateM a -> IO (Either String a)
 runBusPirate path (BPM action) = runEitherT $ do
     dev <- liftIO $ SP.hOpenSerial path settings
-    let go 0 = return $ Left "Failed to enter binary mode"
-        go n = do
-          liftIO $ hFlush dev
-          liftIO $ BS.hPut dev "\x00"
-          a <- liftIO $ BS.hGetSome dev 5
-          if a == "BBIO1"
-            then return $ Right ()
-            else go (n-1)
-    go 20
+    attempt 20 (initialize dev)
     liftIO $ drainInput dev
-    EitherT $ runReaderT (runEitherT action) dev
+    res <- EitherT $ runReaderT (runEitherT action) dev
+    liftIO $ replicateM_ 20 $ BS.hPut dev "\x00"
+    liftIO $ BS.hPut dev "\x0f"
+    liftIO $ hClose dev
+    return res
 
 put :: ByteString -> BusPirateM ()
 put bs = withDevice $ \dev->BPM $ liftIO $ BS.hPut dev bs
