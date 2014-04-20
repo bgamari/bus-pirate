@@ -28,8 +28,9 @@ runBusPirate path (BPM action) = runEitherT $ do
     dev <- liftIO $ SP.hOpenSerial path settings
     let go 0 = return $ Left "Failed to enter binary mode"
         go n = do
+          liftIO $ hFlush dev
           liftIO $ BS.hPut dev "\x00"
-          a <- liftIO $ BS.hGetNonBlocking dev 5
+          a <- liftIO $ BS.hGetSome dev 5
           if a == "BBIO1"
             then return $ Right ()
             else go (n-1)
