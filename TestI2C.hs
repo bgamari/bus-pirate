@@ -18,15 +18,13 @@ writeAddr :: I2CAddress -> Word8
 writeAddr (I2cAddr n) = n
 
 readReg :: I2CAddress -> Word8 -> I2cM Word8
-readReg addr reg = do
+readReg addr reg = BS.head <$> readReg' addr reg 1
+
+readReg' :: I2CAddress -> Word8 -> Int -> I2cM BS.ByteString
+readReg' addr reg length = do
     startBit
     bulkWrite $ BS.pack [writeAddr addr, reg]
-    startBit
-    bulkWrite $ BS.pack [readAddr addr]
-    v <- readByte
-    nackBit
-    stopBit
-    return v
+    writeRead (BS.singleton $ readAddr addr) length
 
 writeReg :: I2CAddress -> Word8 -> Word8 -> I2cM ()
 writeReg addr reg value = do

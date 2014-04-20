@@ -105,7 +105,8 @@ data I2cSpeed = I2c_5kHz
 setSpeed :: I2cSpeed -> I2cM ()
 setSpeed speed = I2cM $ command $ fromIntegral $ 0x60 + fromEnum speed
 
--- | Write some bytes, then read some bytes
+-- | Send Start bit, write some bytes, then read some bytes (ACKing
+-- each until the last), then send a stop bit
 writeRead :: ByteString -> Int -> I2cM ByteString
 writeRead send recv 
   | BS.length send > 0xffff = error "Too large send request"
