@@ -24,6 +24,7 @@ readReg addr reg = do
     startBit
     bulkWrite $ BS.pack [readAddr addr]
     v <- readByte
+    nackBit
     stopBit
     return v
 
