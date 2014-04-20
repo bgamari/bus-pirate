@@ -15,7 +15,7 @@ readAddr :: I2CAddress -> Word8
 readAddr (I2cAddr n) = n + 1
 
 writeAddr :: I2CAddress -> Word8
-writeAddr (I2cAddr n) = n + 1
+writeAddr (I2cAddr n) = n
 
 readReg :: I2CAddress -> Word8 -> I2cM Word8
 readReg addr reg = do
