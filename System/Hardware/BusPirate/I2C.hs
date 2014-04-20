@@ -23,7 +23,7 @@ stopBit :: I2cM ()
 stopBit = I2cM $ command 0x3
 
 readByte :: I2cM Word8
-readByte = I2cM $ put "\x04" >> getByte
+readByte = I2cM $ putByte 0x4 >> getByte
 
 data AckNack = Ack | Nack
              deriving (Show, Eq, Ord, Enum, Bounded)
@@ -69,3 +69,17 @@ data I2cSpeed = I2c_5kHz
               
 setSpeed :: I2cSpeed -> I2cM ()
 setSpeed speed = I2cM $ command $ fromIntegral $ 0x60 + fromEnum speed
+
+writeRead :: ByteString -> Int -> I2cM ByteString
+writeRead send recv 
+  | BS.length send > 0xffff = error "Too large send request"
+  | recv > 0xffff           = error "Too large recieve request"
+  | otherwise               = I2cM $ do
+    putByte 0x8
+    putWord16 $ fromIntegral $ BS.length send
+    putWord16 $ fromIntegral $ recv
+    put send
+    status <- getByte
+    case status of
+      0x00 -> fail "writeRead: Failed"
+      0x01 -> get recv

@@ -40,6 +40,14 @@ runBusPirate path (BPM action) = runEitherT $ do
 
 put :: ByteString -> BusPirateM ()
 put bs = withDevice $ \dev->BPM $ liftIO $ BS.hPut dev bs
+
+putByte :: Word8 -> BusPirateM ()
+putByte b = withDevice $ \dev->BPM $ liftIO $ BS.hPut dev (BS.singleton b)
+
+putWord16 :: Word16 -> BusPirateM ()
+putWord16 b = do
+    putByte $ fromIntegral $ b `div` 0x100
+    putByte $ fromIntegral $ b
     
 get :: Int -> BusPirateM ByteString
 get n = withDevice $ \dev->BPM $ liftIO $ BS.hGet dev n
