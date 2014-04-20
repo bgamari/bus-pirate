@@ -3,7 +3,7 @@
 module System.Hardware.BusPirate.I2C where
 
 import Control.Applicative
-import Control.Monad (replicateM)
+import Control.Monad (replicateM, when)
 import Control.Monad.IO.Class
 import Control.Monad.Trans.Either
 import Data.Word
@@ -34,14 +34,16 @@ ackBit = I2cM $ command 0x6
 nackBit :: I2cM ()
 nackBit = I2cM $ command 0x7
 
-bulkWrite :: ByteString -> I2cM [AckNack]
+bulkWrite :: ByteString -> I2cM ()
 bulkWrite d 
-  | BS.null d = return []
+  | BS.null d = return ()
   | BS.length d > 16 = I2cM $ BPM $ left "Too many bytes"
   | otherwise = I2cM $ do 
     command $ fromIntegral $ 0x10 + BS.length d - 1
     put d
-    replicateM (BS.length d) $ toEnum . fromIntegral <$> getByte
+    acks <- replicateM (BS.length d) $ toEnum . fromIntegral <$> getByte
+    when (any (/= Ack) acks)
+      $ fail "Nack during bulkWrite"
 
 data I2cConfig = I2cConfig { i2cPower      :: Bool
                            , i2cPullups    :: Bool
