@@ -1,0 +1,6 @@
+# bus-pirate - interface with hardware from Haskell
+
+At the moment this only includes support for the
+[Bus Pirate's](http://dangerousprototypes.com/docs/Bus_Pirate)
+[I2C mode](http://dangerousprototypes.com/docs/I2C_%28binary%29). See
+`TestI2C.hs` for an example. Patches welcome!
