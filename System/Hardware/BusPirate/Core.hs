@@ -35,6 +35,7 @@ runBusPirate path (BPM action) = runEitherT $ do
             then return $ Right ()
             else go (n-1)
     go 20
+    liftIO $ hFlush dev
     EitherT $ runReaderT (runEitherT action) dev
 
 put :: ByteString -> BusPirateM ()
