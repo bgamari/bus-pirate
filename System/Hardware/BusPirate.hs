@@ -3,6 +3,7 @@
 module System.Hardware.BusPirate
   ( -- * General
     BusPirateM
+  , runBusPirate
     -- * I2C mode
   , module System.Hardware.BusPirate.I2C
   ) where

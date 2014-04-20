@@ -31,6 +31,7 @@ drainInput h = do
     a <- BS.hGetSome h 100
     when (not $ BS.null a) $ drainInput h
 
+-- | Attempt to enter binary mode
 initialize :: Handle -> EitherT String IO ()
 initialize dev = do
     liftIO $ hFlush dev
@@ -49,6 +50,7 @@ attempt n action = go n
                 Right a -> return a
                 Left _  -> go (n-1)
 
+-- | Open a Bus Pirate device and run the given action
 runBusPirate :: FilePath -> BusPirateM a -> IO (Either String a)
 runBusPirate path (BPM action) = do
     dev <- liftIO $ SP.hOpenSerial path settings
