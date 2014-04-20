@@ -7,6 +7,7 @@ import Control.Monad (replicateM, when)
 import Control.Monad.IO.Class
 import Control.Monad.Trans.Either
 import Data.Word
+import Data.List (intercalate)
 
 import qualified Data.ByteString as BS
 import Data.ByteString (ByteString)
@@ -42,8 +43,11 @@ bulkWrite d
     command $ fromIntegral $ 0x10 + BS.length d - 1
     put d
     acks <- replicateM (BS.length d) $ toEnum . fromIntegral <$> getByte
-    when (any (/= Ack) acks)
-      $ fail "Nack during bulkWrite"
+    case map fst $ filter (\(n,a)->a /= Ack) $ zip [0..] acks of
+      []    -> return ()
+      nacks -> let nacks' = intercalate ", " $ map show nacks
+                   bytes = if length nacks > 1 then "bytes" else "byte"
+               in fail $ "Nack after "++bytes++" "++nacks'++" during bulkWrite of "++show d
 
 data I2cConfig = I2cConfig { i2cPower      :: Bool
                            , i2cPullups    :: Bool
