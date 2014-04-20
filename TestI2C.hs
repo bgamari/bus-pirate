@@ -1,7 +1,11 @@
+-- | Example demonstrating usage with ADXL345 accelerometer
+
 import System.Hardware.BusPirate
 import qualified Data.ByteString as BS
 import Data.Word
+import Control.Monad (forever)
 import Control.Monad.IO.Class
+import Control.Applicative
 
 newtype I2CAddress = I2cAddr Word8
 
@@ -18,17 +22,26 @@ readReg addr reg = do
     startBit
     bulkWrite $ BS.pack [writeAddr addr, reg]
     startBit
-    bulkWrite $ BS.pack [writeAddr addr]
+    bulkWrite $ BS.pack [readAddr addr]
     v <- readByte
     stopBit
     return v
 
 writeReg :: I2CAddress -> Word8 -> Word8 -> I2cM ()
 writeReg addr reg value = do
-    startBit         
+    startBit
     bulkWrite $ BS.pack [writeAddr addr, reg, value]
     stopBit
-    
+
+readAccel :: I2CAddress -> I2cM (Int, Int, Int)
+readAccel addr = do
+    (,,) <$> readPair 0x32 <*> readPair 0x34 <*> readPair 0x36
+  where
+    readPair base = do
+      lsb <- readReg addr base
+      msb <- readReg addr (base+1)
+      return $ (fromIntegral msb) * 2^8 + fromIntegral lsb
+
 main = do
     runBusPirate "/dev/ttyUSB0" $ i2cMode $ do
     setConfig $ I2cConfig { i2cPower = True
@@ -37,3 +50,8 @@ main = do
                           , i2cChipSelect = False
                           }
     readReg addr 0x00 >>= liftIO . print
+    writeReg addr 0x2d 0x08
+    readReg addr 0x2d >>= liftIO . print
+    forever $ do
+      a <- readAccel addr
+      liftIO $ print a
