@@ -17,10 +17,18 @@ module System.Hardware.BusPirate.I2C
   , setConfig
   , I2cSpeed(..)
   , setSpeed
+    -- * Device addresses
+  , I2CAddress(..)
+  , readAddr
+  , writeAddr
+    -- * Register interface
+  , writeReg
+  , readReg
+  , readReg'
   ) where
 
 import Control.Applicative
-import Control.Monad (replicateM, when)
+import Control.Monad (replicateM, when, void)
 import Control.Monad.IO.Class
 import Control.Monad.Trans.Either
 import Data.Word
@@ -120,3 +128,30 @@ writeRead send recv
     case status of
       0x00 -> fail "writeRead: Failed"
       0x01 -> get recv
+
+-- | An I2C address (shifted 7-bit)
+newtype I2CAddress = I2cAddr Word8
+
+readAddr :: I2CAddress -> Word8
+readAddr (I2cAddr n) = n + 1
+
+writeAddr :: I2CAddress -> Word8
+writeAddr (I2cAddr n) = n
+
+type Register = Word8
+
+-- | Perform a read of the given length starting at the given register
+readReg' :: I2CAddress -> Word8 -> Int -> I2cM BS.ByteString
+readReg' addr reg length = do
+    startBit
+    bulkWrite $ BS.pack [writeAddr addr, reg]
+    writeRead (BS.singleton $ readAddr addr) length
+
+-- | Read the given register
+readReg :: I2CAddress -> Word8 -> I2cM Word8
+readReg addr reg = BS.head <$> readReg' addr reg 1
+
+-- | Perform a write to the given register
+writeReg :: I2CAddress -> Word8 -> Word8 -> I2cM ()
+writeReg addr reg value = do
+    void $ writeRead (BS.pack [writeAddr addr, reg, value]) 0
