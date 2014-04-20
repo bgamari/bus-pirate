@@ -10,7 +10,8 @@ import Control.Monad (forever)
 import Control.Monad.IO.Class
 import Control.Applicative
 
-addr = I2cAddr 0xa6
+addr :: I2CAddress
+addr = from8Bit 0xa6
 
 readAccel :: I2CAddress -> I2cM (Int, Int, Int)
 readAccel addr = do

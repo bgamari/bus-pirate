@@ -18,7 +18,9 @@ module System.Hardware.BusPirate.I2C
   , I2cSpeed(..)
   , setSpeed
     -- * Device addresses
-  , I2CAddress(..)
+  , I2CAddress
+  , from7Bit
+  , from8Bit
   , readAddr
   , writeAddr
     -- * Register interface
@@ -31,6 +33,7 @@ import Control.Applicative
 import Control.Monad (replicateM, when, void)
 import Control.Monad.IO.Class
 import Control.Monad.Trans.Either
+import Data.Bits
 import Data.Word
 import Data.List (intercalate)
 
@@ -131,6 +134,14 @@ writeRead send recv
 
 -- | An I2C address (shifted 7-bit)
 newtype I2CAddress = I2cAddr Word8
+
+-- | An I2C address from a unshifted 7-bit address
+from7Bit :: Word8 -> I2CAddress
+from7Bit = I2cAddr . (`shiftL` 1)
+
+-- | An I2C address from a shifted 8-bit address (masking out the read/write bit)
+from8Bit :: Word8 -> I2CAddress
+from8Bit = I2cAddr . (`clearBit` 0)
 
 readAddr :: I2CAddress -> Word8
 readAddr (I2cAddr n) = n + 1
