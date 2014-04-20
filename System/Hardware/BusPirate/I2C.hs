@@ -1,6 +1,23 @@
 {-# LANGUAGE OverloadedStrings, GeneralizedNewtypeDeriving #-}
 
-module System.Hardware.BusPirate.I2C where
+module System.Hardware.BusPirate.I2C
+  ( -- * Primitive operations
+    I2cM
+  , i2cMode
+  , startBit
+  , stopBit
+  , readByte
+  , ackBit
+  , nackBit
+  , AckNack(..)
+  , bulkWrite
+  , writeRead
+    -- * Configuration
+  , I2cConfig(..)
+  , setConfig
+  , I2cSpeed(..)
+  , setSpeed
+  ) where
 
 import Control.Applicative
 import Control.Monad (replicateM, when)
@@ -17,24 +34,34 @@ import System.Hardware.BusPirate.Core
 newtype I2cM a = I2cM (BusPirateM a)
                deriving (Functor, Applicative, Monad, MonadIO)
         
+-- | Enter I2C mode and run given action
+i2cMode :: I2cM a -> BusPirateM a
+i2cMode (I2cM m) = commandExpect 0x2 "I2C1" >>  m
+
+-- | Send a start bit
 startBit :: I2cM ()
 startBit = I2cM $ command 0x2
 
+-- | Send a stop bit
 stopBit :: I2cM ()
 stopBit = I2cM $ command 0x3
 
+-- | Read a byte
 readByte :: I2cM Word8
 readByte = I2cM $ putByte 0x4 >> getByte
 
 data AckNack = Ack | Nack
              deriving (Show, Eq, Ord, Enum, Bounded)
-         
+
+-- | Send an ACK 
 ackBit :: I2cM ()
 ackBit = I2cM $ command 0x6
 
+-- | Send a NACK 
 nackBit :: I2cM ()
 nackBit = I2cM $ command 0x7
 
+-- | Write some bytes
 bulkWrite :: ByteString -> I2cM ()
 bulkWrite d 
   | BS.null d = return ()
@@ -55,7 +82,8 @@ data I2cConfig = I2cConfig { i2cPower      :: Bool
                            , i2cChipSelect :: Bool
                            }
                deriving (Show)
-                           
+
+-- | Set Bus Pirate I2C configuration bits
 setConfig :: I2cConfig -> I2cM ()
 setConfig config = I2cM $ 
     command $ 0x40
@@ -73,9 +101,11 @@ data I2cSpeed = I2c_5kHz
               | I2c_400kHz
               deriving (Show, Eq, Ord, Enum, Bounded)
               
+-- | Set I2C bus speed
 setSpeed :: I2cSpeed -> I2cM ()
 setSpeed speed = I2cM $ command $ fromIntegral $ 0x60 + fromEnum speed
 
+-- | Write some bytes, then read some bytes
 writeRead :: ByteString -> Int -> I2cM ByteString
 writeRead send recv 
   | BS.length send > 0xffff = error "Too large send request"

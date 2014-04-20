@@ -4,7 +4,6 @@ module System.Hardware.BusPirate
   ( -- * General
     module System.Hardware.BusPirate.Core
     -- * I2C mode
-  , i2cMode
   , module System.Hardware.BusPirate.I2C
   ) where
 
@@ -20,9 +19,6 @@ import System.Hardware.BusPirate.I2C
 
 --spiMode :: SpiM a BusPirateM a
 --spiMode = commandExpect 0x01 "SPI1"
-
-i2cMode :: I2cM a -> BusPirateM a
-i2cMode (I2cM m) = commandExpect 0x2 "I2C1" >>  m
 
 --uartMode :: UartM a -> BusPirateM a
 --uartMode = commandExpect 0x3 "ART1"         
