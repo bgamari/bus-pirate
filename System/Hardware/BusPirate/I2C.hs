@@ -1,9 +1,10 @@
 {-# LANGUAGE OverloadedStrings, GeneralizedNewtypeDeriving #-}
 
 module System.Hardware.BusPirate.I2C
-  ( -- * Bus operations
+  ( -- * Types
     I2cM
   , i2cMode
+    -- * Bus operations
   , startBit
   , stopBit
   , readByte
