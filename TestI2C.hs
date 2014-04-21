@@ -5,6 +5,7 @@ import Data.Binary.Get
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
 import Data.Word
+import Data.Int
 import Data.List (intercalate)
 import Control.Monad (forever)
 import Control.Monad.IO.Class
@@ -13,7 +14,7 @@ import Control.Applicative
 addr :: I2CAddress
 addr = from8Bit 0xa6
 
-readAccel :: I2CAddress -> I2cM (Int, Int, Int)
+readAccel :: I2CAddress -> I2cM (Int16, Int16, Int16)
 readAccel addr = do
     d <- readReg' addr 0x32 (3*2)
     return $ flip runGet (LBS.fromStrict d) $ do
