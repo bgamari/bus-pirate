@@ -1,5 +1,5 @@
 name:                bus-pirate
-version:             0.4
+version:             0.5
 synopsis:            Haskell interface to the Bus Pirate binary interface
 homepage:            http://www.github.com/bgamari/bus-pirate
 license:             BSD3
