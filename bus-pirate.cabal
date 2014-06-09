@@ -21,10 +21,10 @@ library
   exposed-modules:     System.Hardware.BusPirate
                        System.Hardware.BusPirate.I2C
   other-modules:       System.Hardware.BusPirate.Core
-  build-depends:       base >=4.6 && <4.7,
+  build-depends:       base >=4.6 && <4.8,
                        serialport >=0.4 && <0.5,
                        bytestring >=0.10 && <0.11,
                        errors >=1.4 && <1.5,
-                       transformers >=0.3 && <0.4,
+                       transformers >=0.3 && <0.5,
                        either
   default-language:    Haskell2010
