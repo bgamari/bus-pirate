@@ -40,6 +40,7 @@ setCS :: Bool -> SpiM ()
 setCS True = SpiM $ command 0x21
 setCS False = SpiM $ command 0x20
 
+-- | Perform a read/write transaction of up to 16 bytes
 bulkTransfer :: ByteString -> SpiM ByteString
 bulkTransfer d
   | BS.null d = return BS.empty
