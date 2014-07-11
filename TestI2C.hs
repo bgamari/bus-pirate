@@ -1,6 +1,7 @@
 -- | Example demonstrating usage with ADXL345 accelerometer
 
 import System.Hardware.BusPirate
+import System.Hardware.BusPirate.I2C
 import Data.Binary.Get
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
@@ -23,12 +24,12 @@ readAccel addr = do
     get = fromIntegral <$> getWord16be
 
 main = do
-    runBusPirate "/dev/ttyUSB0" $ i2cMode $ do
-    setConfig $ I2cConfig { i2cPower = True
-                          , i2cPullups = True
-                          , i2cAux = False
-                          , i2cChipSelect = False
-                          }
+    runI2c "/dev/ttyUSB0" $ do
+    setConfig $ PConfig { perPower = True
+                        , perPullups = True
+                        , perAux = False
+                        , perChipSelect = False
+                        }
     readReg addr 0x00 >>= liftIO . print
     writeReg addr 0x2d 0x08
     readReg addr 0x2d >>= liftIO . print
