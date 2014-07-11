@@ -1,11 +1,11 @@
 {-# LANGUAGE OverloadedStrings, GeneralizedNewtypeDeriving #-}
-                
+
 module System.Hardware.BusPirate
   ( -- * General
     BusPirateM
   , runBusPirate
     -- * I2C mode
-  , module System.Hardware.BusPirate.I2C
+  , runI2c
   ) where
 
 import Control.Monad (replicateM)
@@ -17,3 +17,7 @@ import Control.Applicative
 
 import System.Hardware.BusPirate.Core
 import System.Hardware.BusPirate.I2C
+
+-- | Convenient way to run an I2C action
+runI2c :: FilePath -> I2cM a -> IO (Either String a)
+runI2c path action = runBusPirate path $ i2cMode action
