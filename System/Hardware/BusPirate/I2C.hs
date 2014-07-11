@@ -44,6 +44,9 @@ import System.Hardware.BusPirate.Core
 newtype I2cM a = I2cM (BusPirateM a)
                deriving (Functor, Applicative, Monad, MonadIO)
 
+err :: String -> I2cM a
+err = I2cM . BPM . left
+
 -- | Enter I2C mode and run given action
 i2cMode :: I2cM a -> BusPirateM a
 i2cMode (I2cM m) = commandExpect 0x2 "I2C1" >> m
@@ -109,8 +112,8 @@ setSpeed speed = I2cM $ command $ fromIntegral $ 0x60 + fromEnum speed
 -- to be horribly broken, requiring a conditional read of a status byte.
 writeRead :: ByteString -> Int -> I2cM ByteString
 writeRead send recv
-  | BS.length send > 0xffff = error "Too large send request"
-  | recv > 0xffff           = error "Too large recieve request"
+  | BS.length send > 0xffff = err "Too large send request"
+  | recv > 0xffff           = err "Too large recieve request"
   | otherwise               = I2cM $ do
     putByte 0x8
     putWord16 $ fromIntegral $ BS.length send
