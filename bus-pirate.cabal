@@ -20,6 +20,7 @@ source-repository head
 library
   exposed-modules:     System.Hardware.BusPirate
                        System.Hardware.BusPirate.I2C
+                       System.Hardware.BusPirate.SPI
   other-modules:       System.Hardware.BusPirate.Core
   build-depends:       base >=4.6 && <4.8,
                        serialport >=0.4 && <0.5,
