@@ -44,7 +44,7 @@ import System.Hardware.BusPirate.Core
 
 newtype I2cM a = I2cM (BusPirateM a)
                deriving (Functor, Applicative, Monad, MonadIO)
-        
+
 -- | Enter I2C mode and run given action
 i2cMode :: I2cM a -> BusPirateM a
 i2cMode (I2cM m) = commandExpect 0x2 "I2C1" >> m
@@ -61,11 +61,11 @@ stopBit = I2cM $ command 0x3
 readByte :: I2cM Word8
 readByte = I2cM $ putByte 0x4 >> getByte
 
--- | Send an ACK 
+-- | Send an ACK
 ackBit :: I2cM ()
 ackBit = I2cM $ command 0x6
 
--- | Send a NACK 
+-- | Send a NACK
 nackBit :: I2cM ()
 nackBit = I2cM $ command 0x7
 
@@ -74,10 +74,10 @@ data AckNack = Ack | Nack
 
 -- | Write some bytes
 bulkWrite :: ByteString -> I2cM ()
-bulkWrite d 
+bulkWrite d
   | BS.null d = return ()
   | BS.length d > 16 = I2cM $ BPM $ left "Too many bytes"
-  | otherwise = I2cM $ do 
+  | otherwise = I2cM $ do
     command $ fromIntegral $ 0x10 + BS.length d - 1
     put d
     acks <- replicateM (BS.length d) $ toEnum . fromIntegral <$> getByte
@@ -92,13 +92,13 @@ bulkWrite d
 setConfig :: PeripheralConfig -> I2cM ()
 setConfig config = I2cM $ setPeripherals config
 
--- | I2C bus speed          
+-- | I2C bus speed
 data I2cSpeed = I2c_5kHz
               | I2c_50kHz
               | I2c_100kHz
               | I2c_400kHz
               deriving (Show, Eq, Ord, Enum, Bounded)
-              
+
 -- | Set I2C bus speed
 setSpeed :: I2cSpeed -> I2cM ()
 setSpeed speed = I2cM $ command $ fromIntegral $ 0x60 + fromEnum speed
@@ -106,7 +106,7 @@ setSpeed speed = I2cM $ command $ fromIntegral $ 0x60 + fromEnum speed
 -- | Send Start bit, write some bytes, then read some bytes (ACKing
 -- each until the last), then send a stop bit
 writeRead :: ByteString -> Int -> I2cM ByteString
-writeRead send recv 
+writeRead send recv
   | BS.length send > 0xffff = error "Too large send request"
   | recv > 0xffff           = error "Too large recieve request"
   | otherwise               = I2cM $ do
