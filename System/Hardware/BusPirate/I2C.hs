@@ -11,7 +11,6 @@ module System.Hardware.BusPirate.I2C
   , ackBit
   , nackBit
   , bulkWrite
-  , writeRead
     -- * Configuration
   , PeripheralConfig(..)
   , setConfig
@@ -105,6 +104,9 @@ setSpeed speed = I2cM $ command $ fromIntegral $ 0x60 + fromEnum speed
 
 -- | Send Start bit, write some bytes, then read some bytes (ACKing
 -- each until the last), then send a stop bit
+--
+-- This is very likely broken as the command structure itself appears
+-- to be horribly broken, requiring a conditional read of a status byte.
 writeRead :: ByteString -> Int -> I2cM ByteString
 writeRead send recv
   | BS.length send > 0xffff = error "Too large send request"
