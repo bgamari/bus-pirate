@@ -13,7 +13,7 @@ module System.Hardware.BusPirate.I2C
   , bulkWrite
   , writeRead
     -- * Configuration
-  , I2cConfig(..)
+  , PeripheralConfig(..)
   , setConfig
   , I2cSpeed(..)
   , setSpeed
@@ -47,7 +47,7 @@ newtype I2cM a = I2cM (BusPirateM a)
         
 -- | Enter I2C mode and run given action
 i2cMode :: I2cM a -> BusPirateM a
-i2cMode (I2cM m) = commandExpect 0x2 "I2C1" >>  m
+i2cMode (I2cM m) = commandExpect 0x2 "I2C1" >> m
 
 -- | Send a start bit
 startBit :: I2cM ()
@@ -87,25 +87,12 @@ bulkWrite d
                    bytes = if length nacks > 1 then "bytes" else "byte"
                in fail $ "Nack after "++bytes++" "++nacks'++" during bulkWrite of "++show d
 
-data I2cConfig = I2cConfig { i2cPower      :: Bool
-                           , i2cPullups    :: Bool
-                           , i2cAux        :: Bool
-                           , i2cChipSelect :: Bool
-                           }
-               deriving (Show)
 
--- | Set Bus Pirate I2C configuration bits
-setConfig :: I2cConfig -> I2cM ()
-setConfig config = I2cM $ 
-    command $ 0x40
-            + bit 3 (i2cPower config)
-            + bit 2 (i2cPullups config)
-            + bit 1 (i2cAux config)
-            + bit 0 (i2cChipSelect config)
-  where
-    bit n True = 2^n
-    bit _ _    = 0
+-- | Set Bus Pirate peripheral configuration bits
+setConfig :: PeripheralConfig -> I2cM ()
+setConfig config = I2cM $ setPeripherals config
 
+-- | I2C bus speed          
 data I2cSpeed = I2c_5kHz
               | I2c_50kHz
               | I2c_100kHz

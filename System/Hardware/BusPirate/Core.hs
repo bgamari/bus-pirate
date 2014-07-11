@@ -94,3 +94,22 @@ commandExpect cmd reply = do
     
 command :: Word8 -> BusPirateM ()
 command cmd = commandExpect cmd "\x01"
+
+data PeripheralConfig
+    = PConfig { perPower      :: Bool
+              , perPullups    :: Bool
+              , perAux        :: Bool
+              , perChipSelect :: Bool
+              }
+    deriving (Show)
+
+setPeripherals :: PeripheralConfig -> BusPirateM ()
+setPeripherals config = do
+    command $ 0x40
+            + bit 3 (perPower config)
+            + bit 2 (perPullups config)
+            + bit 1 (perAux config)
+            + bit 0 (perChipSelect config)
+  where
+    bit n True = 2^n
+    bit _ _    = 0
