@@ -10,12 +10,17 @@ import Control.Monad.Trans.Reader
 import Control.Monad.IO.Class
 import System.IO
 import Data.Word
+import Data.List (intercalate)
+import qualified Numeric
 import Control.Concurrent (threadDelay)
 
 import System.Hardware.Serialport as SP
 
 import qualified Data.ByteString as BS
 import Data.ByteString (ByteString)
+
+debug :: Bool
+debug = False
 
 newtype BusPirateM a = BPM (EitherT String (ReaderT Handle IO) a)
                      deriving (Functor, Applicative, Monad, MonadIO)
@@ -64,7 +69,9 @@ runBusPirate path (BPM action) = do
     return res
 
 put :: ByteString -> BusPirateM ()
-put bs = withDevice $ \dev->BPM $ liftIO $ BS.hPut dev bs
+put bs = withDevice $ \dev->BPM $ do
+   liftIO $ BS.hPut dev bs
+   when debug $ liftIO $ print $ showHex bs
 
 putByte :: Word8 -> BusPirateM ()
 putByte b = withDevice $ \dev->BPM $ liftIO $ BS.hPut dev (BS.singleton b)
@@ -113,3 +120,8 @@ setPeripherals config = do
   where
     bit n True = 2^n
     bit _ _    = 0
+
+showHex :: BS.ByteString -> String
+showHex = intercalate " " . map (zeroPad 2 . flip Numeric.showHex "") . BS.unpack
+  where
+    zeroPad n s = replicate (n - length s) '0' ++ s
