@@ -25,8 +25,9 @@ readAccel addr = do
 
 main = do
     runI2c "/dev/ttyUSB0" $ do
+    setSpeed I2c_100kHz
     setConfig $ PConfig { perPower = True
-                        , perPullups = True
+                        , perPullups = False
                         , perAux = False
                         , perChipSelect = False
                         }
