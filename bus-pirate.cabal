@@ -22,7 +22,7 @@ library
                        System.Hardware.BusPirate.I2C
                        System.Hardware.BusPirate.SPI
   other-modules:       System.Hardware.BusPirate.Core
-  build-depends:       base >=4.6 && <4.8,
+  build-depends:       base >=4.6 && <4.9,
                        serialport >=0.4 && <0.5,
                        bytestring >=0.10 && <0.11,
                        errors >=1.4 && <1.5,
