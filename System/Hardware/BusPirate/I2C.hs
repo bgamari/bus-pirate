@@ -29,7 +29,7 @@ module System.Hardware.BusPirate.I2C
   ) where
 
 import Control.Applicative
-import Control.Monad (replicateM, when, void)
+import Control.Monad (replicateM, void)
 import Control.Monad.IO.Class
 import Control.Monad.Trans.Except
 import Data.Bits
