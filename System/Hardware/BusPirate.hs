@@ -10,13 +10,6 @@ module System.Hardware.BusPirate
   , runSpi
   ) where
 
-import Control.Monad (replicateM)
-import Control.Monad.IO.Class
-import Control.Monad.Trans.Class
-import Control.Monad.Trans.Either
-import Control.Monad.Trans.Reader
-import Control.Applicative
-
 import System.Hardware.BusPirate.Core
 import System.Hardware.BusPirate.I2C
 import System.Hardware.BusPirate.SPI
