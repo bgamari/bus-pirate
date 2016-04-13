@@ -5,7 +5,7 @@ module System.Hardware.BusPirate.Core where
 import Control.Applicative
 import Control.Monad (when, replicateM_)
 import Control.Monad.Trans.Class
-import Control.Monad.Trans.Either
+import Control.Monad.Trans.Except
 import Control.Monad.Trans.Reader
 import Control.Monad.IO.Class
 import System.IO
@@ -22,7 +22,7 @@ import Data.ByteString (ByteString)
 debug :: Bool
 debug = False
 
-newtype BusPirateM a = BPM (EitherT String (ReaderT Handle IO) a)
+newtype BusPirateM a = BPM (ExceptT String (ReaderT Handle IO) a)
                      deriving (Functor, Applicative, Monad, MonadIO)
 
 withDevice :: (Handle -> BusPirateM a) -> BusPirateM a
@@ -37,20 +37,20 @@ drainInput h = do
     when (not $ BS.null a) $ drainInput h
 
 -- | Attempt to enter binary mode
-initialize :: Handle -> EitherT String IO ()
+initialize :: Handle -> ExceptT String IO ()
 initialize dev = do
     liftIO $ hFlush dev
     liftIO $ BS.hPut dev "\x00"
     a <- liftIO $ BS.hGetSome dev 5
     when (a /= "BBIO1")
-      $ left "Invalid response during initialization"
+      $ throwE "Invalid response during initialization"
 
 -- | Run the given action until success up to n times
-attempt :: Monad m => Int -> EitherT e m a -> EitherT e m a
+attempt :: Monad m => Int -> ExceptT e m a -> ExceptT e m a
 attempt n action = go n
   where
     go 0 = action
-    go n = do res <- lift $ runEitherT action
+    go n = do res <- lift $ runExceptT action
               case res of
                 Right a -> return a
                 Left _  -> go (n-1)
@@ -59,10 +59,10 @@ attempt n action = go n
 runBusPirate :: FilePath -> BusPirateM a -> IO (Either String a)
 runBusPirate path (BPM action) = do
     dev <- liftIO $ SP.hOpenSerial path settings
-    res <- runEitherT $ do
+    res <- runExceptT $ do
       attempt 20 (initialize dev)
       liftIO $ drainInput dev
-      EitherT $ runReaderT (runEitherT action) dev
+      ExceptT $ runReaderT (runExceptT action) dev
     replicateM_ 20 $ BS.hPut dev "\x00"
     BS.hPut dev "\x0f"
     hClose dev

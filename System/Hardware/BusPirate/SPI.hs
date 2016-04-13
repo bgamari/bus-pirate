@@ -17,7 +17,7 @@ module System.Hardware.BusPirate.SPI
 import Control.Applicative
 import Control.Monad (replicateM)
 import Control.Monad.IO.Class
-import Control.Monad.Trans.Either
+import Control.Monad.Trans.Except
 import Data.Word
 
 import qualified Data.ByteString as BS
@@ -29,7 +29,7 @@ newtype SpiM a = SpiM (BusPirateM a)
                deriving (Functor, Applicative, Monad, MonadIO)
 
 err :: String -> SpiM a
-err = SpiM . BPM . left
+err = SpiM . BPM . throwE
 
 -- | Enter I2C mode and run given action
 spiMode :: SpiM a -> BusPirateM a
@@ -44,7 +44,7 @@ setCS False = SpiM $ command 0x20
 bulkTransfer :: ByteString -> SpiM ByteString
 bulkTransfer d
   | BS.null d = return BS.empty
-  | BS.length d > 16 = SpiM $ BPM $ left "Too many bytes"
+  | BS.length d > 16 = err "Too many bytes"
   | otherwise = SpiM $ do
     command $ fromIntegral $ 0x10 + BS.length d - 1
     put d
@@ -84,6 +84,6 @@ writeRead toggleCS write readLen
     putWord16 readLen
     status <- getByte
     case status of
-      0 -> BPM $ left "Data too long"
+      0 -> BPM $ throwE "Data too long"
       1 -> do put write
               get (fromIntegral readLen)

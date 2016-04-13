@@ -31,7 +31,7 @@ module System.Hardware.BusPirate.I2C
 import Control.Applicative
 import Control.Monad (replicateM, when, void)
 import Control.Monad.IO.Class
-import Control.Monad.Trans.Either
+import Control.Monad.Trans.Except
 import Data.Bits
 import Data.Word
 import Data.List (intercalate)
@@ -45,7 +45,7 @@ newtype I2cM a = I2cM (BusPirateM a)
                deriving (Functor, Applicative, Monad, MonadIO)
 
 err :: String -> I2cM a
-err = I2cM . BPM . left
+err = I2cM . BPM . throwE
 
 -- | Enter I2C mode and run given action
 i2cMode :: I2cM a -> BusPirateM a
@@ -78,7 +78,7 @@ data AckNack = Ack | Nack
 bulkWrite :: ByteString -> I2cM ()
 bulkWrite d
   | BS.null d = return ()
-  | BS.length d > 16 = I2cM $ BPM $ left "Too many bytes"
+  | BS.length d > 16 = err "Too many bytes"
   | otherwise = I2cM $ do
     command $ fromIntegral $ 0x10 + BS.length d - 1
     put d
